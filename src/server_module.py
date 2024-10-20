@@ -42,22 +42,18 @@ class Connection:
 	
 	def announce_event(self, message: str):
 		def get_player_form(count):
-			if 11 >= count >= 20:
-				return 'игроков'
-			elif count % 10 == 1:
+			if count % 10 == 1:
 				return 'игрок'
 			elif 2 <= count % 10 <= 4:
 				return 'игрока'
-			elif 5 <= count % 10 <= 9 or count % 10 == 0:
+			elif 11 >= count >= 20 or 5 <= count % 10 <= 9 or count % 10 == 0:
 				return 'игроков'
 		
 		response = {
-			'joined': lambda nick, count: f'Игрок {nick} зашёл на сервер!'
-										  f'\nТеперь на сервере {count} {get_player_form(count)}.',
-			'disconnected': lambda nick, count: f'Игрок {nick} вышел с сервера.'
-												f'\nТеперь на сервере {count} {get_player_form(count)}.',
-			'started': lambda: 'Майнкрафт сервер успешно запущен! :)',
-			'stopped': lambda: 'Майнкрафт сервер выключен. =('
+			'joined':		lambda nick, count: f'Игрок {nick} зашёл на сервер!\nТеперь на сервере {count} {get_player_form(count)}.',
+			'disconnected':	lambda nick, count: f'Игрок {nick} вышел с сервера.\nТеперь на сервере {count} {get_player_form(count)}.',
+			'started':		lambda: 'Майнкрафт сервер успешно запущен! :)',
+			'stopped':		lambda: 'Майнкрафт сервер выключен. =('
 		}
 		
 		split_message = message.split()

@@ -4,26 +4,32 @@ import socket
 from flask import Flask, request
 
 from src.classes import Subscribers, ConnectedClient
-from src.enviroment import SERVERPORT
+from src.enviroment import SERVER_PORT, HOST_IP, URL_RULE, VK_PORT
 from src.vk_module import VK
 from src.server_module import Connection
 
 
 app = Flask(__name__)
 
-Subscribers: Subscribers
+subscribers: Subscribers
 connection: Connection
 vk: VK
 
-@app.route('/callback', methods=['POST'])
+
+@app.route(URL_RULE, methods=['POST'])
 def callback():
 	data = request.json
 	return vk.handle_input(connection, data)
-	
-def start_server(host='localhost', port=12345):
+
+
+def start_server(host: str, port: int):
 	# Создаем сокет
 	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	server_socket.bind((host, port))
+	try:
+		server_socket.bind((host, port))
+	except OSError as e:
+		raise OSError(f"Error occurred while binding port {port}. The server cannot start. Change the port or close programs that use this port.\n{e}")
+	
 	server_socket.listen(1)
 	vk.send_message_to_admin("Сервер запущен. Ожидание соединений...")
 	
@@ -42,9 +48,9 @@ if __name__ == "__main__":
 	connection = Connection(vk, subscribers.subscribers)
 
 	# Запускаем сервер в отдельном потоке
-	server_thread = threading.Thread(name="ServerThread", target=start_server, args=('localhost', SERVERPORT))
+	server_thread = threading.Thread(name="ServerThread", target=start_server, args=(HOST_IP, SERVER_PORT))
 	server_thread.daemon = True
 	server_thread.start()
 
 	# Запускаем Flask приложение
-	app.run(host='0.0.0.0', port=80)
+	app.run(host='0.0.0.0', port=VK_PORT)

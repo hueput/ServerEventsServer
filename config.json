@@ -1,0 +1,12 @@
+{
+  "serverSetting":
+  {
+    "host": "localhost",
+    "port": 12345
+  },
+  "vkConnection": {
+    "url_rule": "/callback",
+    "port": 80
+  },
+  "adminID": 358103786
+}
