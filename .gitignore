@@ -16,3 +16,6 @@ bin/
 # secret
 .env
 listening_peers
+
+# python
+*/__pycache__
