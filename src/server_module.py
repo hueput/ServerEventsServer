@@ -18,7 +18,7 @@ class Connection:
 		try:
 			# Обрабатываем данные от клиента
 			while True:
-				data = connected_client.client_socket.recv(1024)  # Читаем данные размером до 1024 байт
+				data = connected_client.socket.recv(1024)  # Читаем данные размером до 1024 байт
 				if not data:
 					break  # Если данные не получены, выходим из цикла
 				
@@ -33,11 +33,11 @@ class Connection:
 					self.process_response(message)
 		
 		except Exception as e:
-			self.vk.send_message_to_admin(message=f"Ошибка: {e}", addr=connected_client.client_address)
+			self.vk.send_message_to_admin(message=f"Ошибка: {e}", addr=connected_client.address)
 		finally:
 			self.isConnected = False
 			connected_client.close()
-			self.vk.send_message_to_admin(message="Соединение с сервером прервано.", addr=connected_client.client_address)
+			self.vk.send_message_to_admin(message="Соединение с сервером прервано.", addr=connected_client.address)
 			self.vk.send_message_to_subscribers(message='Соединение с майнкрафт сервером было прервано.')
 	
 	def announce_event(self, message: str):

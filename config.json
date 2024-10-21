@@ -1,6 +1,5 @@
 {
-  "serverSetting":
-  {
+  "serverSetting": {
     "host": "localhost",
     "port": 12345
   },
@@ -8,5 +7,6 @@
     "url_rule": "/callback",
     "port": 80
   },
-  "adminID": 358103786
+  "adminID": 358103786,
+  "debugging": false
 }

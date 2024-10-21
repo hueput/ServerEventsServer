@@ -4,8 +4,8 @@ from random import randint
 
 from src.classes import Subscribers
 from src.server_module import Connection
-from src.enviroment import SECRET, ADMIN_ID, TOKEN
-
+from src.configuration import SECRET, ADMIN_ID, TOKEN
+import src.configuration as configuration
 
 class VK:
 	def __init__(self, subscribers: Subscribers):
@@ -16,6 +16,10 @@ class VK:
 		self.vk_api = self.vk_session.get_api()
 	
 	def send_message(self, peer_id: int, message: str):
+		if configuration.DEBUGGING is True:
+			print(f"Message to {peer_id}: {message}")
+			return
+
 		self.vk_api.messages.send(
 			peer_id=peer_id,
 			message=message,
@@ -23,9 +27,13 @@ class VK:
 		)
 	
 	def send_message_to_admin(self, message: str, addr: Union[str, tuple] = None):
+		if configuration.DEBUGGING is True:
+			print(f"Message to ADMIN: {message}")
+			return
+
 		self.send_message(
 			peer_id=ADMIN_ID,
-			message=message + (f'\n{addr}' if addr else '')
+			message=message + (f'\n{addr}' if addr is not None else '')
 		)
 	
 	def reply_message(self, peer_id: int, message: str, data):
@@ -39,6 +47,10 @@ class VK:
 			self.last_message_time[peer_id] = data['object']['date']
 	
 	def send_message_to_subscribers(self, message: str):
+		if configuration.DEBUGGING is True:
+			print(f"Message to SUBSCRIBERS: {message}")
+			return
+
 		for peer_id in self.subscribers.subscribers:
 			self.send_message(peer_id, message)
 	
@@ -48,11 +60,11 @@ class VK:
 		if data is None or 'type' not in data: return 'ok'
 		
 		if data['type'] == 'message_new' and 'text' in data['object'] and 'peer_id' in data['object']:
-			self._handle_message(data, connection)
+			self._handle_new_message(data, connection)
 		
 		return 'ok'
 	
-	def _handle_message(self, data: dict, connection: Connection):
+	def _handle_new_message(self, data: dict, connection: Connection):
 		from_id: int = data['object']['from_id']
 		peer_id: int = data['object']['peer_id']
 		message_text: str = data['object']['text']

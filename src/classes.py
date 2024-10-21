@@ -2,23 +2,23 @@ from socket import socket
 
 
 class ConnectedClient:
-	client_socket: socket
-	client_address: tuple
+	socket: socket
+	address: tuple
 	isOpened = False
 	
 	def __init__(self, client_socket: socket, client_address: tuple):
-		self.client_socket = client_socket
-		self.client_address = client_address
+		self.socket = client_socket
+		self.address = client_address
 		self.isOpened = True
 	
 	def close(self):
-		if self.client_socket:
-			self.client_socket.close()
+		if self.socket:
+			self.socket.close()
 			self.isOpened = False
 	
 	def send(self, message: str):
-		if self.client_socket and self.isOpened:
-			self.client_socket.sendall((message + "\n").encode('utf-8'))
+		if self.socket and self.isOpened:
+			self.socket.sendall((message + "\n").encode('utf-8'))
 
 
 class Subscribers:
