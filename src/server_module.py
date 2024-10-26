@@ -1,5 +1,5 @@
 from src.classes import ConnectedClient
-
+import src.localization as localization
 
 event_types = ('joined', 'disconnected', 'started', 'stopped')
 response_types = ('players_list',)
@@ -33,41 +33,35 @@ class Connection:
 					self.process_response(message)
 		
 		except Exception as e:
-			self.vk.send_message_to_admin(message=f"Ошибка: {e}", addr=connected_client.address)
+			self.vk.send_message_to_admin(message=localization.get("error")+f' {e}', addr=connected_client.address)
 		finally:
 			self.isConnected = False
 			connected_client.close()
-			self.vk.send_message_to_admin(message="Соединение с сервером прервано.", addr=connected_client.address)
-			self.vk.send_message_to_subscribers(message='Соединение с майнкрафт сервером было прервано.')
+			# self.vk.send_message_to_admin(message="Соединение с сервером прервано.", addr=connected_client.address)
+			# self.vk.send_message_to_subscribers(message='Соединение с майнкрафт сервером было прервано.')
+			self.vk.send_message_to_admin(message=localization.get("minecraft_connection_lost"), addr=connected_client.address)
+			self.vk.send_message_to_subscribers(message=localization.get("minecraft_connection_lost"))
 	
 	def announce_event(self, message: str):
-		def get_player_form(count):
-			if count % 10 == 1:
-				return 'игрок'
-			elif 2 <= count % 10 <= 4:
-				return 'игрока'
-			elif 11 >= count >= 20 or 5 <= count % 10 <= 9 or count % 10 == 0:
-				return 'игроков'
-		
-		response = {
-			'joined':		lambda nick, count: f'Игрок {nick} зашёл на сервер!\nТеперь на сервере {count} {get_player_form(count)}.',
-			'disconnected':	lambda nick, count: f'Игрок {nick} вышел с сервера.\nТеперь на сервере {count} {get_player_form(count)}.',
-			'started':		lambda: 'Майнкрафт сервер успешно запущен! :)',
-			'stopped':		lambda: 'Майнкрафт сервер выключен. =('
-		}
 		
 		split_message = message.split()
 		message_type = split_message[0]
 		message = ''
 		
-		if message_type == 'joined' or message_type == 'disconnected':  # паттерн: "joined nickname 8"
+		if message_type == 'joined':  # pattern: "joined nickname 8"
 			nickname = split_message[1]
-			playersCount = int(split_message[2])
-			message = response[message_type](nickname, playersCount)
+			players_count = int(split_message[2])
+			message = (localization.get("minecraft_player_joined")
+			           .format(nickname=nickname, server_players_count=players_count, server_max_players_count='20'))
+		elif message_type == "disconnected":
+			nickname = split_message[1]
+			players_count = int(split_message[2])
+			message = (localization.get("minecraft_player_disconnected")
+			           .format(nickname=nickname, server_players_count=players_count, server_max_players_count='20'))
 		elif message_type == 'started':
-			message = response[message_type]()
+			message = localization.get("minecraft_server_started")
 		elif message_type == 'stopped':
-			message = response[message_type]()
+			message = localization.get("minecraft_server_stopped")
 		
 		if message != '':
 			self.vk.send_message_to_subscribers(message=message)
@@ -79,12 +73,12 @@ class Connection:
 		if response_type == 'players_list':
 			if len(response.split()) > 1:
 				playerNames = response.split(maxsplit=1)[1].split(',')
-				content = 'На сервере сейчас играют:\n'
+				content = localization.get("whoPlaying_list")+'\n'
 				for nickname in playerNames:
 					content += '- ' + nickname + '\n'
 				content = content[:-1]  # убираем в конце '\n' (\n - это один символ.)
 			else:
-				content = 'Пока что на сервере никого нет.'
+				content = localization.get("whoPlaying_none")
 		
 		for peer_id, data in self.awaiting_response[response_type]:
 			self.vk.reply_message(peer_id=peer_id, message=content, data=data)

@@ -6,6 +6,7 @@ from src.classes import Subscribers
 from src.server_module import Connection
 from src.configuration import SECRET, ADMIN_ID, TOKEN
 import src.configuration as configuration
+import src.localization as localization
 
 class VK:
 	def __init__(self, subscribers: Subscribers):
@@ -74,20 +75,16 @@ class VK:
 		if from_id == ADMIN_ID or from_id == peer_id:  # Включение логирования в чате возможно только владельцем или в личном чате.
 			if message_text.lower() == 'включить логирование':
 				self.subscribers.add_subscriber(peer_id)
-				reply_text = 'Логирование в данный чат включено.'
-				if peer_id == from_id:
-					reply_text += '\nЧтобы выключить, напишите \"Выключить логирование\"'
+				reply_text = localization.get("logging_enabled")
 			elif message_text.lower() == 'выключить логирование' and self.subscribers.is_subscriber(peer_id):
 				self.subscribers.remove_subscriber(peer_id)
-				reply_text = 'Логирование в данный чат выключено.'
-				if peer_id == from_id:
-					reply_text += '\nЧтобы включить, напишите \"Включить логирование\"'
+				reply_text = localization.get("logging_disabled")
 		
 		if message_text.lower() == 'кто играет':
 			if connection is not None:
 				connection.execute_server_command('get_players', peer_id, data)
 			else:
-				reply_text = 'Подключения к серверу пока нет.'
+				reply_text = localization.get("whoPlaying_no_connection")
 		
 		if reply_text != '':
 			self.reply_message(peer_id=peer_id, message=reply_text, data=data)

@@ -1,0 +1,15 @@
+{
+  "python_server_started": "Сервер запущен. Ожидание соединений...",
+  "connection_established": "Соединение с майнкрафт сервером было успешно установлено.",
+  "error": "Ошибка:",
+  "minecraft_connection_lost": "Соединение с сервером было прервано.",
+  "minecraft_player_joined": "{nickname} зашёл на сервер [{server_players_count}/{server_max_players_count}]",
+  "minecraft_player_disconnected": "{nickname} вышел с сервера [{server_players_count}/{server_max_players_count}]",
+  "minecraft_server_started": "Майнкрафт сервер запущен!",
+  "minecraft_server_stopped": "Майнкрафт сервер выключен.",
+  "whoPlaying_list": "На сервере сейчас играют:",
+  "whoPlaying_none": "Пока что на сервере никого нет.",
+  "whoPlaying_no_connection":  "Подключения к серверу пока нет",
+  "logging_enabled": "Логирование в данный чат включено.",
+  "logging_disabled": "Логирование в данный чат выключено."
+}

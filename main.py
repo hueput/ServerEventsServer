@@ -4,10 +4,11 @@ import socket
 from flask import Flask, request
 
 from src.classes import Subscribers, ConnectedClient
-from src.configuration import SERVER_PORT, HOST_IP, URL_RULE, VK_PORT
+from src.configuration import SERVER_PORT, HOST_IP, URL_RULE, VK_PORT, LANGUAGE
 from src.vk_module import VK
 from src.server_module import Connection
 import src.configuration as configuration
+import src.localization as localization
 
 
 app = Flask(__name__)
@@ -32,44 +33,57 @@ def start_server(host: str, port: int):
 		raise OSError(f"Error occurred while binding port {port}. The server cannot start. Change the port or close programs that use this port.\n{e}")
 	
 	server_socket.listen(1)
-	vk.send_message_to_admin("Сервер запущен. Ожидание соединений...")
+	# vk.send_message_to_admin("Сервер запущен. Ожидание соединений...")
+	vk.send_message_to_admin(localization.get("python_server_started"))
 	
 	while True:
 		# Принимаем входящее соединение
 		client_socket, addr = server_socket.accept()
-		vk.send_message_to_admin(message="Соединение с майнкрафт сервером было успешно установлено.", addr=addr)
-		vk.send_message_to_subscribers(message="Соединение с майнкрафт сервером было успешно установлено.")
+		# vk.send_message_to_admin(message="Соединение с майнкрафт сервером было успешно установлено.", addr=addr)
+		# vk.send_message_to_subscribers(message="Соединение с майнкрафт сервером было успешно установлено.")
+		vk.send_message_to_admin(message=localization.get("connection_established"), addr=addr)
+		vk.send_message_to_subscribers(message=localization.get("connection_established"))
 		connection.server_connection_handler(ConnectedClient(client_socket, addr))
 
 
 def command_input():
 	while True:
-		entered = input().split('=')
-		if len(entered) != 2:
-			print("You should write command as {configVariable}={value}")
-			continue
-		
-		entered = list(map(str.strip, entered))
-		variable = entered[0]
-		value = entered[1]
-		
-		if variable.lower() == 'debugging':  # prints output into console instead of sending them to VK
-			if value.lower() not in ('true', 'false'):
-				print('This parameter only supports boolean values! (true or false)')
-				
-			if value.lower() == 'true':
-				value = True
+		entered = input()
+
+		if '=' in entered:
+			entered = entered.split('=')
+			if len(entered) != 2:
+				print("You should write command as {configVariable}={value}")
+				continue
+
+			entered = list(map(str.strip, entered))
+			variable = entered[0]
+			value = entered[1]
+
+			if variable.lower() == 'debugging':  # prints output into console instead of sending them to VK
+				if value.lower() not in ('true', 'false'):
+					print('This parameter only supports boolean values! (true or false)')
+
+				if value.lower() == 'true':
+					value = True
+				else:
+					value = False
+
+				configuration.DEBUGGING = value
+				configuration.save_parameter("debugging", value)
+				print(f"Done and saved! DEBUGGING = {value}")
 			else:
-				value = False
-			
-			configuration.DEBUGGING = value
-			configuration.save_parameter("debugging", value)
-			print(f"Done and saved! DEBUGGING = {value}")
-		else:
-			print(f"You can't change this variable here. Change it in config.json. You entered: var={variable}, value={value}")
+				print(f"You can't change this variable here. Change it in config.json. You entered: var={variable}, value={value}")
+		elif entered == 'reload': # reload ru_RU
+			if len(entered.split()) == 1:
+				localization.load()
+			else:
+				localization.load(entered.split()[1])
 
 
 if __name__ == "__main__":
+	localization.load(LANGUAGE)
+
 	subscribers = Subscribers()
 	subscribers.load_subscribers()
 	vk = VK(subscribers)

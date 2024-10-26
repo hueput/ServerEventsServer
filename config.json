@@ -7,6 +7,7 @@
     "url_rule": "/callback",
     "port": 80
   },
+  "language": "ru_RU",
   "adminID": 358103786,
   "debugging": false
 }
