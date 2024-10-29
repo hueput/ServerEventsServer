@@ -16,6 +16,7 @@ bin/
 # secret
 .env
 listening_peers
+bot.db
 
 # python
 */__pycache__

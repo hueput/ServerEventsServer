@@ -1,28 +1,31 @@
 from dotenv import load_dotenv
-from json import load, dump
 from os import getenv
+import json
 
 with open("config.json") as f:
-	data: dict = load(f)
+	data: dict = json.load(f)
 
 load_dotenv()
 
-ADMIN_ID 	= data["adminID"]
-SERVER_PORT	= data["serverSetting"]["port"]
-HOST_IP 	= data["serverSetting"]["host"]
-URL_RULE 	= data["vkConnection"]["url_rule"]
-VK_PORT 	= data["vkConnection"]["port"]
-DEBUGGING	= data["debugging"]
-LANGUAGE    = data["language"]
+ADMIN_ID	: int	= data["admin_ID"]
+SERVER_PORT	: int	= data["server_setting"]["port"]
+HOST_IP		: str	= data["server_setting"]["host"]
+URL_RULE	: str	= data["vk_connection"]["url_rule"]
+VK_PORT		: int	= data["vk_connection"]["port"]
+DEBUGGING	: bool	= data["debugging"]
+LANGUAGE	: str	= data["language"]
+DB_NAME		: str	= data["database_name"]
 
-SECRET 		= getenv("SECRET")
-TOKEN 		= getenv("TOKEN")
+DELETE_MESSAGES: bool = data["delete_messages"]
+DELETE_MESSAGES_INTERVAL_MINUTES: int = data["delete_messages_interval_minutes"]
 
-del data
+SECRET	: str      = getenv("SECRET")
+TOKEN	: str      = getenv("TOKEN")
+
 
 def save_parameter(parameter: str, value):
 	with open("config.json") as file:
-		config = load(file)
+		config = json.load(file)
 	
 	keys = parameter.split('.')
 	current = config
@@ -36,5 +39,5 @@ def save_parameter(parameter: str, value):
 	current[keys[-1]] = value
 	
 	with open("config.json", "w") as file:
-		dump(config, file, indent=2)
+		json.dump(config, file, indent=2)
 	

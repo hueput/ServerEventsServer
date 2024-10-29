@@ -37,8 +37,6 @@ class Connection:
 		finally:
 			self.isConnected = False
 			connected_client.close()
-			# self.vk.send_message_to_admin(message="Соединение с сервером прервано.", addr=connected_client.address)
-			# self.vk.send_message_to_subscribers(message='Соединение с майнкрафт сервером было прервано.')
 			self.vk.send_message_to_admin(message=localization.get("minecraft_connection_lost"), addr=connected_client.address)
 			self.vk.send_message_to_subscribers(message=localization.get("minecraft_connection_lost"))
 	

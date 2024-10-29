@@ -10,8 +10,6 @@ def load(lang="ru_RU"):
 		print(f"Localization {lang} loaded successfully.")
 	except FileNotFoundError:
 		print(f"Localization file {lang}.json was not found.")
-		if _localization == dict() and lang != "ru_RU":
-			load()
 
 def get(string_identifier: str):
 	if string_identifier in _localization:
