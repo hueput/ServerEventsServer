@@ -5,7 +5,7 @@ import time
 from flask import Flask, request
 
 from src.classes import Subscribers, ConnectedClient
-from src.configuration import SERVER_PORT, HOST_IP, URL_RULE, VK_PORT, LANGUAGE
+from src.configuration import SERVER_PORT, HOST_IP, URL_RULE, VK_PORT, LANGUAGE, SECRET
 from src.vk_module import VK
 from src.server_module import Connection
 import src.configuration as configuration
@@ -22,7 +22,10 @@ vk: VK
 @app.route(URL_RULE, methods=['POST'])
 def callback():
 	data = request.json
-	if "type" not in data: return 'ok'
+	if data is None or "type" not in data: return 'ok'
+	if data['type'] == "confirmation": return '0bee3904'
+	if "secret" not in data: return 'ok'
+	if data['secret'] != SECRET: return 'ok'
 
 	ret = 'ok'
 
@@ -34,23 +37,31 @@ def callback():
 	return ret
 
 
-def start_server(host: str, port: int):
-	# Создаем сокет
-	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	try:
-		server_socket.bind((host, port))
-	except OSError as e:
-		raise OSError(f"Error occurred while binding port {port}. The server cannot start. Change the port or close programs that use this port.\n{e}")
-	
-	server_socket.listen(1)
+def start_connection(host: str, port: int):
+	def connect(address, client: ConnectedClient = None):
+		connection_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		while True or time.sleep(10):
+			try:
+				connection_socket.connect(address)
+				break
+			except BaseException:
+				pass
+
+		if not client:
+			client = ConnectedClient(client_socket=connection_socket, client_address=address, reconnect_func=reconnect)
+		else:
+			client.__init__(client_socket=connection_socket, client_address=address, reconnect_func=reconnect)
+
+		vk.send_message_to_admin(localization.get("connection_established"))
+		connection.server_connection_handler(client)
+
+	def reconnect(address, client: ConnectedClient = None):
+		print('RECONNECTING', address)
+		connect(address, client=client)
+
 	vk.send_message_to_admin(localization.get("python_server_started"))
-	
-	while True:
-		# Принимаем входящее соединение
-		client_socket, addr = server_socket.accept()
-		vk.send_message_to_admin(message=localization.get("connection_established"), addr=addr)
-		vk.send_message_to_subscribers(message=localization.get("connection_established"))
-		connection.server_connection_handler(ConnectedClient(client_socket, addr))
+
+	connect((host, port))
 
 
 def command_input():
@@ -58,11 +69,9 @@ def command_input():
 		try:
 			entered = input().lower()
 		except UnicodeDecodeError:
-			print("You wrote something strange")
 			continue
 		except KeyboardInterrupt:
 			return
-
 
 		if '=' in entered:
 			entered = entered.split('=')
@@ -77,6 +86,7 @@ def command_input():
 			if variable == 'debugging':  # prints output into console instead of sending it to VK
 				if value not in ('true', 'false'):
 					print('This parameter only supports boolean values! (true or false)')
+					continue
 
 				if value == 'true':
 					value = True
@@ -90,6 +100,7 @@ def command_input():
 				if not value.isdecimal():
 					print("The value must be a number")
 					continue
+
 				value = int(value)
 				configuration.DELETE_MESSAGES_INTERVAL_MINUTES = value
 				configuration.save_parameter("delete_messages_interval_minutes", value)
@@ -129,9 +140,9 @@ if __name__ == "__main__":
 	connection = Connection(vk, subscribers.subscribers)
 
 	# Запускаем сервер в отдельном потоке
-	server_thread = threading.Thread(name="ServerThread", target=start_server, args=(HOST_IP, SERVER_PORT))
-	server_thread.daemon = True
-	server_thread.start()
+	connection_thread = threading.Thread(name="ServerThread", target=start_connection, args=(HOST_IP, SERVER_PORT))
+	connection_thread.daemon = True
+	connection_thread.start()
 	
 	# Запускаем ввод консольных команд в отдельном потоке
 	input_thread = threading.Thread(name="InputThread", target=command_input)

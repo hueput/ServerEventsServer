@@ -4,8 +4,8 @@ import sqlite3
 import src.configuration as configuration
 
 
-def init():
-    with sqlite3.connect(configuration.DB_NAME) as connection:
+def init(db_name = configuration.DB_NAME):
+    with sqlite3.connect(db_name) as connection:
         cursor = connection.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS "sent_messages" (

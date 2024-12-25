@@ -1,4 +1,3 @@
-from typing import Union
 from vk_api import VkApi
 from random import randint
 
@@ -14,26 +13,37 @@ class VK:
 		self.last_message_time = {}
 		self.subscribers = subscribers
 		
-		self.vk_session = VkApi(token=TOKEN)
+		self.vk_session = VkApi(token=TOKEN, api_version='5.199')
 		self.vk_api = self.vk_session.get_api()
 	
 	def send_message(self, peer_id: int, message: str):
+		if message == '':
+			return
+
 		if configuration.DEBUGGING is True:
 			print(f"Message to {peer_id}: {message}")
 			return
 
-		response = self.vk_api.messages.send(
-			peer_ids=str(peer_id),
-			message=message,
-			random_id=randint(1, 2 ** 31 - 1)
-		)[0]
+		response = 0
+		try:
+			response = self.vk_api.messages.send(
+				peer_ids=str(peer_id),
+				message=message,
+				random_id=randint(1, 2 ** 31 - 1)
+			)[0]
+		except BaseException as e:
+			print(e)
 
 		if configuration.DELETE_MESSAGES is True and response != 0:
-			message_id = response["message_id"]
-			cmid = response["conversation_message_id"]
-			database.save_message(peer_id, message_id, cmid, text=message)
+			try:
+				message_id = response["message_id"]
+				cmid = response["conversation_message_id"]
+				database.save_message(peer_id, message_id, cmid, text=message)
+			except BaseException as e:
+				print(response)
+				print(e)
 	
-	def send_message_to_admin(self, message: str, addr: Union[str, tuple] = None):
+	def send_message_to_admin(self, message: str, addr: tuple[str, tuple] = None):
 		if configuration.DEBUGGING is True:
 			print(f"Message to ADMIN: {message}")
 			return
@@ -62,7 +72,6 @@ class VK:
 			self.send_message(peer_id, message)
 	
 	def handle_input(self, connection: Connection, data: dict):
-		if data['type'] == "confirmation": return '0bb32910'
 		if data['secret'] != SECRET: return 'ok'
 		if data is None or 'type' not in data: return 'ok'
 		
@@ -73,17 +82,21 @@ class VK:
 	def _delete_messages(self, peer_id, message_ids: list):
 		try:
 			if peer_id >= 2000000001:
-				self.vk_api.messages.delete(
+				response = self.vk_api.messages.delete(
 					peer_id=peer_id,
 					cmids=','.join(list(map(str, message_ids))),
 					delete_for_all="1"
 				)
 			else:
-				self.vk_api.messages.delete(
+				response = self.vk_api.messages.delete(
 					peer_id=peer_id,
 					message_ids=','.join(list(map(str, message_ids))),
 					delete_for_all="1"
 				)
+
+			if 'error' in response:
+				print('Error while deleting messages:', response['error'], sep='\n')
+
 		except BaseException as e:
 			print(e)
 
@@ -107,6 +120,13 @@ class VK:
 				self.subscribers.remove_subscriber(peer_id)
 				reply_text = localization.get("logging_disabled")
 		
+		if peer_id == ADMIN_ID: # TODO: добавить в "бот" вывод local_chat_id чата и удалять с помощью "удали {local_chat_id}"
+			if message_text == 'удали' and len(data["object"]["fwd_messages"])>0:
+				cmids = []
+				for message in data["object"]["fwd_messages"]:
+					cmids.append(message["conversation_message_id"])
+				self._delete_messages(2000000002, cmids)
+		
 		if message_text == 'кто играет':
 			if connection is not None:
 				connection.execute_server_command('get_players', peer_id, data)
@@ -114,8 +134,8 @@ class VK:
 				reply_text = localization.get("whoPlaying_no_connection")
 		elif message_text == 'бот':
 			"""
-			Подключение ✅ / ❌
-			Сообщения удаляются через: {} мин.
+			[{}] Подключение ✅ / ❌  {} = local_chat_id
+			Сообщения удаляются через: {} мин.  {} = delete_messages_delay
 			"""
 			connection_state = '✅'
 			if connection.isConnected is False:

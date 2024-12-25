@@ -6,15 +6,19 @@ class ConnectedClient:
 	address: tuple
 	isOpened = False
 	
-	def __init__(self, client_socket: socket, client_address: tuple):
+	def __init__(self, client_socket: socket, client_address: tuple, reconnect_func=None):
 		self.socket = client_socket
 		self.address = client_address
+		self.reconnect_func = reconnect_func
 		self.isOpened = True
 	
 	def close(self):
 		if self.socket:
 			self.socket.close()
 			self.isOpened = False
+
+		if self.reconnect_func:
+			self.reconnect_func(self.address, client=self)
 	
 	def send(self, message: str):
 		if self.socket and self.isOpened:

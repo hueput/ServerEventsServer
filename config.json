@@ -1,16 +1,16 @@
 {
   "server_setting": {
     "host": "localhost",
-    "port": 12345
+    "port": 25500
   },
   "vk_connection": {
     "url_rule": "/callback",
-    "port": 80
+    "port": 4578
   },
   "language": "ru_RU",
   "admin_ID": 358103786,
-  "debugging": false,
+  "debugging": true,
   "delete_messages": true,
-  "delete_messages_interval_minutes": 60,
+  "delete_messages_interval_minutes": 1440,
   "database_name": "bot.db"
 }
